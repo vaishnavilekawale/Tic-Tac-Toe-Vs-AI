@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe vs AI</title>
+  <style>
+    body {
+      background-image: url(images/ttt.png);
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      text-align: center;
+      padding-top: 40px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      margin: 20px auto;
+      width: 310px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      font-size: 2.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #333;
+      cursor: pointer;
+    }
+
+    #status {
+      font-size: 20px;
+      margin-top: 15px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🤖 Tic Tac Toe vs AI</h1>
+
+  <div id="board"></div>
+  <div id="status">Your turn (X)</div>
+  <button onclick="resetGame()">Play Again</button>
+
+  <script>
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+
+    let board = Array(9).fill("");
+    let gameActive = true;
+
+    function drawBoard() {
+      boardEl.innerHTML = "";
+      board.forEach((val, i) => {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.innerText = val;
+        cell.addEventListener("click", handlePlayerMove);
+        boardEl.appendChild(cell);
+      });
+    }
+
+    function handlePlayerMove(e) {
+      const i = e.target.dataset.index;
+      if (!gameActive || board[i]) return;
+
+      board[i] = "X";
+      drawBoard();
+
+      if (checkWin("X")) {
+        statusEl.innerText = "🎉 You Win!";
+        gameActive = false;
+        return;
+      }
+
+      if (board.every(cell => cell)) {
+        statusEl.innerText = "It's a Tie!";
+        gameActive = false;
+        return;
+      }
+
+      statusEl.innerText = "AI's turn (O)";
+      setTimeout(aiMove, 500); // AI delay
+    }
+
+    function aiMove() {
+      if (!gameActive) return;
+
+      let emptyIndexes = board.map((val, i) => val === "" ? i : null).filter(v => v !== null);
+      if (emptyIndexes.length === 0) return;
+
+      let move = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+      board[move] = "O";
+      drawBoard();
+
+      if (checkWin("O")) {
+        statusEl.innerText = "💻 AI Wins!";
+        gameActive = false;
+        return;
+      }
+
+      if (board.every(cell => cell)) {
+        statusEl.innerText = "It's a Tie!";
+        gameActive = false;
+        return;
+      }
+
+      statusEl.innerText = "Your turn (X)";
+    }
+
+    function checkWin(player) {
+      const winCombos = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      return winCombos.some(combo => combo.every(i => board[i] === player));
+    }
+
+    function resetGame() {
+      board = Array(9).fill("");
+      gameActive = true;
+      statusEl.innerText = "Your turn (X)";
+      drawBoard();
+    }
+
+    drawBoard();
+  </script>
+
+</body>
+</html>
