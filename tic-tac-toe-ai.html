@@ -5,62 +5,89 @@
   <title>Tic Tac Toe vs AI</title>
   <style>
     body {
-      background-image: url(images/ttt.png);
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      text-align: center;
-      padding-top: 40px;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(145deg, #1e1e2f, #12121a);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
     }
 
     h1 {
-      margin-bottom: 10px;
+      font-size: 3rem;
+      margin: 20px;
+      color: #00f7ff;
+      text-shadow: 0 0 10px #00f7ff;
     }
 
     #board {
       display: grid;
       grid-template-columns: repeat(3, 100px);
-      grid-gap: 5px;
-      margin: 20px auto;
-      width: 310px;
+      grid-gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
     }
 
     .cell {
       width: 100px;
       height: 100px;
-      background: white;
-      font-size: 2.5em;
+      font-size: 2.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid #333;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid #00f7ff;
+      border-radius: 10px;
+      color: #fff;
       cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .cell:hover {
+      background: rgba(0, 247, 255, 0.2);
     }
 
     #status {
-      font-size: 20px;
-      margin-top: 15px;
+      margin-top: 20px;
+      font-size: 1.5rem;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
     }
 
     button {
-      margin-top: 15px;
+      margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
+      background: #00f7ff;
+      color: #000;
+      border: none;
+      border-radius: 25px;
       cursor: pointer;
+      box-shadow: 0 0 10px #00f7ff;
+      transition: transform 0.2s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background: #00d0e0;
     }
   </style>
 </head>
 <body>
 
-  <h1>🤖 Tic Tac Toe vs AI</h1>
-
+  <h1>🤖 Tic Tac Toe vs Strong AI</h1>
   <div id="board"></div>
   <div id="status">Your turn (X)</div>
-  <button onclick="resetGame()">Play Again</button>
+  <button onclick="resetGame()">🔁 Play Again</button>
 
   <script>
     const boardEl = document.getElementById("board");
     const statusEl = document.getElementById("status");
-
     let board = Array(9).fill("");
     let gameActive = true;
 
@@ -68,7 +95,7 @@
       boardEl.innerHTML = "";
       board.forEach((val, i) => {
         const cell = document.createElement("div");
-        cell.classList.add("cell");
+        cell.className = "cell";
         cell.dataset.index = i;
         cell.innerText = val;
         cell.addEventListener("click", handlePlayerMove);
@@ -90,47 +117,83 @@
       }
 
       if (board.every(cell => cell)) {
-        statusEl.innerText = "It's a Tie!";
+        statusEl.innerText = "🤝 It's a Tie!";
         gameActive = false;
         return;
       }
 
       statusEl.innerText = "AI's turn (O)";
-      setTimeout(aiMove, 500); // AI delay
+      setTimeout(() => {
+        const best = getBestMove(board, "O");
+        board[best] = "O";
+        drawBoard();
+
+        if (checkWin("O")) {
+          statusEl.innerText = "💻 AI Wins!";
+          gameActive = false;
+        } else if (board.every(cell => cell)) {
+          statusEl.innerText = "🤝 It's a Tie!";
+          gameActive = false;
+        } else {
+          statusEl.innerText = "Your turn (X)";
+        }
+      }, 500);
     }
 
-    function aiMove() {
-      if (!gameActive) return;
+    function getBestMove(newBoard, player) {
+      const opponent = player === "X" ? "O" : "X";
 
-      let emptyIndexes = board.map((val, i) => val === "" ? i : null).filter(v => v !== null);
-      if (emptyIndexes.length === 0) return;
+      if (checkWinFor(newBoard, "X")) return -10;
+      if (checkWinFor(newBoard, "O")) return 10;
+      if (newBoard.every(c => c)) return 0;
 
-      let move = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
-      board[move] = "O";
-      drawBoard();
+      const moves = [];
 
-      if (checkWin("O")) {
-        statusEl.innerText = "💻 AI Wins!";
-        gameActive = false;
-        return;
+      newBoard.forEach((val, i) => {
+        if (!val) {
+          const move = {};
+          move.index = i;
+          newBoard[i] = player;
+          const result = getBestMove(newBoard, opponent);
+          move.score = typeof result === "object" ? result.score : -result;
+          newBoard[i] = "";
+          moves.push(move);
+        }
+      });
+
+      let bestMove;
+      if (player === "O") {
+        let bestScore = -Infinity;
+        moves.forEach(m => {
+          if (m.score > bestScore) {
+            bestScore = m.score;
+            bestMove = m;
+          }
+        });
+      } else {
+        let bestScore = Infinity;
+        moves.forEach(m => {
+          if (m.score < bestScore) {
+            bestScore = m.score;
+            bestMove = m;
+          }
+        });
       }
 
-      if (board.every(cell => cell)) {
-        statusEl.innerText = "It's a Tie!";
-        gameActive = false;
-        return;
-      }
-
-      statusEl.innerText = "Your turn (X)";
+      return moves.length === 0 ? 0 : bestMove.index ?? bestMove;
     }
 
     function checkWin(player) {
+      return checkWinFor(board, player);
+    }
+
+    function checkWinFor(b, player) {
       const winCombos = [
         [0,1,2],[3,4,5],[6,7,8],
         [0,3,6],[1,4,7],[2,5,8],
         [0,4,8],[2,4,6]
       ];
-      return winCombos.some(combo => combo.every(i => board[i] === player));
+      return winCombos.some(combo => combo.every(i => b[i] === player));
     }
 
     function resetGame() {
